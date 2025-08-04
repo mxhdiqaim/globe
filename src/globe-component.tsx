@@ -10,41 +10,11 @@ const BUMP_IMAGE_URL = "//unpkg.com/three-globe/example/img/earth-topology.png";
 const GlobeComponent = () => {
   const globeEl = useRef<any>(null);
   const [countries, setCountries] = useState({
-    type: "FeatureCollection",
+    type: "Feature",
     features: [],
   });
 
   const [hoveredCountry, setHoveredCountry] = useState<any | null>(null);
-
-  useEffect(() => {
-    fetch("/custom-110-metre.geojson")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((geoJson) => {
-        setCountries(geoJson);
-      })
-      .catch((error) => console.error("Error loading GeoJSON:", error));
-  }, []);
-
-  // Set initial camera position and controls
-  useEffect(() => {
-    if (globeEl.current) {
-      // Auto-rotate
-      globeEl.current.controls().autoRotate = true;
-      globeEl.current.controls().autoRotateSpeed = 0.3;
-
-      // Zoom level
-      globeEl.current.camera().zoom = 1;
-
-      // Set initial point of view (lat, lng, altitude)
-      // Altitude is in units of globe radius, 1.5 is good for an overview
-      globeEl.current.pointOfView({ lat: 9.072264, lng: 7.491302, altitude: 1.5 }, 5000);
-    }
-  }, []);
 
   // Handle Polygon Hover Event (provided directly by react-globe.gl)
   const handlePolygonHover = useCallback((polygon: object | null) => {
@@ -70,6 +40,31 @@ const GlobeComponent = () => {
     },
     [hoveredCountry]
   );
+
+  useEffect(() => {
+    fetch("/custom-110-metre.geojson")
+      .then((res) => res.json())
+      .then((geoJson) => {
+        setCountries(geoJson);
+      })
+      .catch((error) => console.error("Error loading GeoJSON:", error));
+  }, []);
+
+  // Set initial camera position and controls
+  useEffect(() => {
+    if (globeEl.current) {
+      // Auto-rotate
+      globeEl.current.controls().autoRotate = true;
+      globeEl.current.controls().autoRotateSpeed = 0.3;
+
+      // Zoom level
+      globeEl.current.camera().zoom = 1;
+
+      // Set initial point of view (lat, lng, altitude)
+      // Altitude is in units of globe radius, 1.5 is good for an overview
+      globeEl.current.pointOfView({ lat: 9.072264, lng: 7.491302, altitude: 1.5 }, 5000);
+    }
+  }, []);
 
   return (
     <div style={{ width: "100vw", height: "100vh", overflow: "hidden" }}>
