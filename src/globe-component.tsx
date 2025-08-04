@@ -18,6 +18,24 @@ const GlobeComponent = () => {
   const [hoveredCountry, setHoveredCountry] = useState<any | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<any | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  // Function to handle the search input change
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const query = event.target.value;
+    setSearchQuery(query);
+
+    if (query.length > 2) {
+      const filteredResults = countries.features.filter((feature: any) =>
+        feature.properties.admin.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(filteredResults);
+    } else {
+      setSearchResults([]);
+    }
+  };
+
   const handlePolygonHover = useCallback((polygon: object | null) => {
     setHoveredCountry(polygon);
     if (polygon) {
@@ -79,6 +97,24 @@ const GlobeComponent = () => {
     globeEl.current.pointOfView({ lat: 9.072264, lng: 7.491302, altitude: 1.5 }, 2000);
   }, []);
 
+  // Function to handle a click on a search result
+  const handleSearchResultClick = (countryFeature: any) => {
+    setSelectedCountry(countryFeature);
+
+    try {
+      const centroid = turf.centroid(countryFeature);
+      const [lng, lat] = centroid.geometry.coordinates;
+
+      globeEl.current.pointOfView({ lat, lng, altitude: 0.5 }, 2000);
+      globeEl.current.controls().autoRotate = false;
+    } catch (error) {
+      console.error("Error calculating centroid or flying camera:", error);
+    }
+
+    setSearchQuery("");
+    setSearchResults([]);
+  };
+
   useEffect(() => {
     fetch("/custom-110-metre.geojson")
       .then((res) => res.json())
@@ -91,11 +127,9 @@ const GlobeComponent = () => {
   // Set initial camera position and controls
   useEffect(() => {
     if (globeEl.current) {
-      // Auto-rotate
       globeEl.current.controls().autoRotate = true;
       globeEl.current.controls().autoRotateSpeed = 0.3;
 
-      // Zoom level
       globeEl.current.camera().zoom = 1;
 
       // Set initial point of view (lat, lng, altitude)
@@ -106,6 +140,57 @@ const GlobeComponent = () => {
 
   return (
     <div style={{ width: "100vw", height: "100vh", overflow: "hidden" }}>
+      <div
+        style={{
+          position: "absolute",
+          top: "20px",
+          left: "20px",
+          zIndex: 1000,
+        }}
+      >
+        <input
+          type='text'
+          value={searchQuery}
+          onChange={handleSearchChange}
+          placeholder='Search for a country...'
+          style={{
+            padding: "8px",
+            fontSize: "16px",
+            width: "300px",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+          }}
+        />
+        {searchResults.length > 0 && searchQuery.length > 2 && (
+          <ul
+            style={{
+              listStyle: "none",
+              margin: "0",
+              padding: "0",
+              backgroundColor: "rgba(0,0,0,0.7)",
+              borderRadius: "5px",
+              marginTop: "5px",
+              maxHeight: "300px",
+              overflowY: "auto",
+            }}
+          >
+            {searchResults.map((country: any) => (
+              <li
+                key={country.properties.iso_a2}
+                onClick={() => handleSearchResultClick(country)}
+                style={{
+                  padding: "10px",
+                  cursor: "pointer",
+                  color: "white",
+                  borderBottom: "1px solid #444",
+                }}
+              >
+                {country.properties.admin}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       <Globe
         ref={globeEl}
         width={window.innerWidth}
