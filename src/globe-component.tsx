@@ -2,6 +2,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import Globe from "react-globe.gl";
 import type { Feature } from "geojson";
+import * as turf from "@turf/turf";
 
 // URL for a high-res earth image
 const GLOBE_IMAGE_URL = "//unpkg.com/three-globe/example/img/earth-night.jpg";
@@ -15,8 +16,8 @@ const GlobeComponent = () => {
   });
 
   const [hoveredCountry, setHoveredCountry] = useState<any | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<any | null>(null);
 
-  // Handle Polygon Hover Event (provided directly by react-globe.gl)
   const handlePolygonHover = useCallback((polygon: object | null) => {
     setHoveredCountry(polygon);
     if (polygon) {
@@ -31,15 +32,52 @@ const GlobeComponent = () => {
     (polygon: object) => {
       const defaultColor = "rgba(30, 144, 255, 0.5)";
       const hoverColor = "rgba(255, 255, 0, 0.5)";
+      const clickColor = "rgba(0, 255, 0, 0.7)";
       const feature = polygon as Feature;
 
+      // Check if this is the selected country
+      if (selectedCountry && selectedCountry.properties.iso_a2 === (feature as any).properties.iso_a2) {
+        return clickColor;
+      }
+
+      // Check if this is the hovered country
       if (hoveredCountry && feature.properties && hoveredCountry.properties.iso_a2 === feature.properties.iso_a2) {
         return hoverColor;
       }
       return defaultColor;
     },
-    [hoveredCountry]
+    [hoveredCountry, selectedCountry]
   );
+
+  // Handler for when a country is clicked
+  const handlePolygonClick = useCallback((polygon: any | null) => {
+    if (polygon) {
+      // Update the selected country state
+      setSelectedCountry(polygon);
+
+      try {
+        // Get the center of the polygon
+        const centroid = turf.centroid(polygon);
+        const [lng, lat] = centroid.geometry.coordinates;
+
+        // Fly the camera to the calculated centroid
+        globeEl.current.pointOfView({ lat, lng, altitude: 0.5 }, 2000);
+
+        // Stop auto-rotation
+        globeEl.current.controls().autoRotate = false;
+      } catch (error) {
+        console.error("Error calculating centroid or flying camera:", error);
+      }
+    }
+  }, []);
+
+  // Function to handle a click on the globe itself (not a country)
+  const handleGlobeClick = useCallback(() => {
+    // This will reset the view if the user clicks on the ocean
+    setSelectedCountry(null);
+    globeEl.current.controls().autoRotate = true;
+    globeEl.current.pointOfView({ lat: 9.072264, lng: 7.491302, altitude: 1.5 }, 2000);
+  }, []);
 
   useEffect(() => {
     fetch("/custom-110-metre.geojson")
@@ -93,9 +131,11 @@ const GlobeComponent = () => {
         polygonStrokeColor={() => "#111"}
         polygonAltitude={0.009}
         onPolygonHover={handlePolygonHover}
+        onPolygonClick={handlePolygonClick}
+        onGlobeClick={handleGlobeClick}
         enablePointerInteraction={true}
       />
-      {hoveredCountry && (
+      {selectedCountry && (
         <div
           style={{
             position: "absolute",
@@ -108,10 +148,10 @@ const GlobeComponent = () => {
             zIndex: 1000,
           }}
         >
-          <h3>{hoveredCountry.properties.admin}</h3>
-          <p>ISO A2: {hoveredCountry.properties.iso_a2}</p>
-          {hoveredCountry.properties.pop_est && (
-            <p>Population Est: {hoveredCountry.properties.pop_est.toLocaleString()}</p>
+          <h3>{selectedCountry.properties.admin}</h3>
+          <p>ISO A2: {selectedCountry.properties.iso_a2}</p>
+          {selectedCountry.properties.pop_est && (
+            <p>Population Est: {selectedCountry.properties.pop_est.toLocaleString()}</p>
           )}
         </div>
       )}
