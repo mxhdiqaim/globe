@@ -1,69 +1,56 @@
-# React + TypeScript + Vite
+# Interactive Globe Visualization
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a web-based application that provides an interactive 3D globe experience.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Interactive 3D Globe**: A fully interactive 3D globe built with `react-globe.gl`.
+- **Country Highlighting**: Hover over a country to highlight it, and click to select it and fly the camera to its location.
+- **Search Functionality**: A real-time search bar allows users to quickly find and navigate to any country on the globe.
+- **Data Visualization**: Displays animated points on the globe representing countries that meet a specific data threshold (e.g., countries with a population over 50 million).
+- **Slick User Interface**: The UI is designed using Material-UI for a professional, responsive, and easy-to-use experience.
+- **Data Panels**: Displays detailed information about the currently selected country in a clean, unobtrusive panel.
 
-## Expanding the ESLint configuration
+## Technologies Used
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **React**: The core JavaScript library for building the user interface.
+- **react-globe.gl**: A powerful React component for creating interactive 3D globes.
+- **Material-UI (MUI)**: A popular React UI framework for a sleek and consistent design.
+- **@turf/turf**: A geospatial library used for calculating country centroids.
+- **GeoJSON**: The data format for rendering country polygons.
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Installation
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+To get a local copy up and running, follow these simple steps.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1.  **Clone the repository**:
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+    ```sh
+    git clone <repo-url>
+    cd globe
+    ```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+2.  **Install dependencies**:
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+    ```sh
+    pnpm install
+    ```
+
+3.  **Run the development server**:
+    ```sh
+    pnpm dev
+    ```
+
+The application will be available at `http://localhost:3000`.
+
+## Data Source
+
+The GeoJSON data for the country polygons is sourced from the Natural Earth project. The data file used is `custom-110-metre.geojson`.
+
+## Contributing
+
+Contributions are welcome. Just make sure you open a PR
+
+## License
+
+Distributed under the MIT License.
