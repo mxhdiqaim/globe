@@ -3,8 +3,13 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import Globe from "react-globe.gl";
 import type { Feature } from "geojson";
 import * as turf from "@turf/turf";
-// Import Material-UI components
 import { Box, Paper, TextField, List, ListItem, ListItemButton, ListItemText, Typography } from "@mui/material";
+
+import CountriesJSON from "./assets/custom-110-metre.json";
+import CountriesGeoJSON from "./assets/custom-110-metre.geojson";
+
+type CountryJSONT = typeof CountriesJSON;
+type CountryGeoJSONT = typeof CountriesGeoJSON;
 
 // URL for a high-res earth image
 const GLOBE_IMAGE_URL = "//unpkg.com/three-globe/example/img/earth-night.jpg";
@@ -17,6 +22,9 @@ const GlobeComponent = () => {
     features: [],
   });
 
+  console.log("Country JSON", CountriesJSON as CountryJSONT);
+  // console.log("Country Geo JSON", CountriesGeoJSON as CountryGeoJSONT);
+
   const [hoveredCountry, setHoveredCountry] = useState<any | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<any | null>(null);
 
@@ -24,6 +32,8 @@ const GlobeComponent = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  const [cityPoints, setCityPoints] = useState<any[]>([]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target.value;
@@ -106,7 +116,7 @@ const GlobeComponent = () => {
 
   useEffect(() => {
     if (countries.features.length > 0) {
-      const populationThreshold = 50000000;
+      const populationThreshold = 50_000_000;
 
       const importantCountries = countries.features.filter(
         (feature: any) => feature.properties.pop_est > populationThreshold
@@ -130,6 +140,23 @@ const GlobeComponent = () => {
         setCountries(geoJson);
       })
       .catch((error) => console.error("Error loading GeoJSON:", error));
+  }, []);
+
+  // Add this useEffect hook
+  useEffect(() => {
+    // Fetch data from your local backend
+    fetch("http://localhost:5000/api/cities")
+      .then((res) => res.json())
+      .then((geoJson) => {
+        const points = geoJson.features.map((feature: any) => ({
+          lat: feature.geometry.coordinates[1],
+          lng: feature.geometry.coordinates[0],
+          label: feature.properties.name,
+          population: feature.properties.population,
+        }));
+        setCityPoints(points);
+      })
+      .catch((error) => console.error("Error fetching city data:", error));
   }, []);
 
   useEffect(() => {
@@ -233,7 +260,8 @@ const GlobeComponent = () => {
         onPolygonClick={handlePolygonClick}
         onGlobeClick={() => handlePolygonClick(null)}
         enablePointerInteraction={true}
-        pointsData={countryPoints}
+        // pointsData={countryPoints}
+        pointsData={[...countryPoints, ...cityPoints]}
         pointAltitude={(point) => (point as any).size}
         pointColor={() => "yellow"}
         pointLabel={(point) =>
