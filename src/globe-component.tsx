@@ -5,12 +5,6 @@ import type { Feature } from "geojson";
 import * as turf from "@turf/turf";
 import { Box, Paper, TextField, List, ListItem, ListItemButton, ListItemText, Typography } from "@mui/material";
 
-import CountriesJSON from "./assets/custom-110-metre.json";
-import CountriesGeoJSON from "./assets/custom-110-metre.geojson";
-
-type CountryJSONT = typeof CountriesJSON;
-type CountryGeoJSONT = typeof CountriesGeoJSON;
-
 // URL for a high-res earth image
 const GLOBE_IMAGE_URL = "//unpkg.com/three-globe/example/img/earth-night.jpg";
 const BUMP_IMAGE_URL = "//unpkg.com/three-globe/example/img/earth-topology.png";
@@ -21,9 +15,6 @@ const GlobeComponent = () => {
     type: "Feature",
     features: [],
   });
-
-  console.log("Country JSON", CountriesJSON as CountryJSONT);
-  // console.log("Country Geo JSON", CountriesGeoJSON as CountryGeoJSONT);
 
   const [hoveredCountry, setHoveredCountry] = useState<any | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<any | null>(null);
@@ -142,18 +133,23 @@ const GlobeComponent = () => {
       .catch((error) => console.error("Error loading GeoJSON:", error));
   }, []);
 
-  // Add this useEffect hook
   useEffect(() => {
-    // Fetch data from your local backend
     fetch("http://localhost:5000/api/cities")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return res.json();
+      })
       .then((geoJson) => {
         const points = geoJson.features.map((feature: any) => ({
           lat: feature.geometry.coordinates[1],
           lng: feature.geometry.coordinates[0],
           label: feature.properties.name,
           population: feature.properties.population,
+          size: feature.properties.population ? Math.max(0.1, Math.log(feature.properties.population) / 15) : 0.1,
         }));
+        console.log("points:", points);
         setCityPoints(points);
       })
       .catch((error) => console.error("Error fetching city data:", error));
