@@ -124,6 +124,30 @@ const GlobeComponent = () => {
     }
   }, [countries]);
 
+  const handleGlobeZoom = useCallback((state: any) => {
+    const currentAltitude = state.altitude;
+    const zoomThreshold = 0.6; // Matches the backend's threshold
+
+    // Only fetch if the zoom level has changed significantly and we're crossing the threshold
+    if (currentAltitude < zoomThreshold) {
+      fetch(`http://localhost:5000/api/cities?altitude=${currentAltitude}`)
+        .then((res) => res.json())
+        .then((geoJson) => {
+          const points = geoJson.features.map((feature: any) => ({
+            lat: feature.geometry.coordinates[1],
+            lng: feature.geometry.coordinates[0],
+            label: feature.properties.name,
+            population: feature.properties.population,
+            size: feature.properties.population ? Math.max(0.1, Math.log(feature.properties.population) / 15) : 0.1,
+          }));
+          setCityPoints(points);
+        })
+        .catch((error) => console.error("Error fetching city data:", error));
+    } else {
+      setCityPoints([]); // Clear points when zoomed out
+    }
+  }, []);
+
   useEffect(() => {
     fetch("/custom-110-metre.geojson")
       .then((res) => res.json())
@@ -146,10 +170,9 @@ const GlobeComponent = () => {
           lat: feature.geometry.coordinates[1],
           lng: feature.geometry.coordinates[0],
           label: feature.properties.name,
-          population: feature.properties.population,
           size: feature.properties.population ? Math.max(0.1, Math.log(feature.properties.population) / 15) : 0.1,
+          population: feature.properties.population,
         }));
-        console.log("points:", points);
         setCityPoints(points);
       })
       .catch((error) => console.error("Error fetching city data:", error));
@@ -256,7 +279,7 @@ const GlobeComponent = () => {
         onPolygonClick={handlePolygonClick}
         onGlobeClick={() => handlePolygonClick(null)}
         enablePointerInteraction={true}
-        // pointsData={countryPoints}
+        onZoom={handleGlobeZoom}
         pointsData={[...countryPoints, ...cityPoints]}
         pointAltitude={(point) => (point as any).size}
         pointColor={() => "yellow"}
